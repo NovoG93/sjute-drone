@@ -21,6 +21,8 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
+from launch.conditions import IfCondition
+from launch.substitutions import LaunchConfiguration
 
 def get_teleop_controller(context, *_, **kwargs) -> Node:
     controller = context.launch_configurations["controller"]
@@ -63,11 +65,19 @@ def generate_launch_description():
         yaml_dict = yaml.load(f, Loader=yaml.FullLoader)
         model_ns = yaml_dict["namespace"]
 
+    joystick_arg = LaunchConfiguration('joystick')
+
     return LaunchDescription([
         DeclareLaunchArgument(
             "controller",
             default_value="keyboard",
             description="Type of controller: keyboard (default) or joystick",
+        ),
+
+        DeclareLaunchArgument(
+            "joystick",
+            default_value="false",
+            description="Flag to enable joystick control",
         ),
 
         Node(
@@ -92,6 +102,7 @@ def generate_launch_description():
             name='joy',
             namespace=model_ns,
             output='screen',
+            condition=IfCondition(joystick_arg),
         ),
 
         OpaqueFunction(
